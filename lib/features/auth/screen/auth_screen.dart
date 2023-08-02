@@ -77,7 +77,6 @@ authService.signInUser(context: context, email: _emailController.text, password:
                   child: Form(
                     key: _signUpFormKey,
                     child: Column(
-
                       children: [
                         CustomTextField(controller: _nameController , hintText: "Name",),
                         SizedBox(height: 10,),
