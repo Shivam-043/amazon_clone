@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:amazon_clone/Constants/error_handling.dart';
 import 'package:amazon_clone/Constants/global_variables.dart';
 import 'package:amazon_clone/Constants/utils.dart';
+import 'package:amazon_clone/common/widgets/bottom_bar.dart';
 import 'package:amazon_clone/home/screens/home_screen.dart';
 import 'package:amazon_clone/models/user.dart';
 import 'package:amazon_clone/providers/user_provider.dart';
@@ -60,7 +61,7 @@ class AuthService {
             'Content-Type': 'application/json ; charset=UTF-8',
           });
 
-      print(res.body);
+      // print(res.body);
 
       httpsErrorHandle(
           response: res,
@@ -72,8 +73,48 @@ class AuthService {
             await prefs.setString(
                 "x-auth-token", jsonDecode(res.body)['token']);
             Navigator.pushNamedAndRemoveUntil(
-                context, HomeScreen.routeName, (route) => false);
+                context, BottomBar.routeName, (route) => false);
           });
+    } catch (e) {
+      showSnackBar(context, e.toString());
+    }
+  }
+
+  //Get User Data
+
+  static getUserData(
+      BuildContext context) async {
+    try {
+
+      SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+      String? token = sharedPreferences.getString('x-auth-token');
+
+      if(token == null) {
+        sharedPreferences.setString('x-auth-token', '');
+      }
+      
+      var tokenRes = await http.post(
+          Uri.parse('$uri/tokenIsValid'),
+      headers: <String , String>{
+        'Content-Type': 'application/json ; charset=UTF-8',
+        "x-auth-token" :token!
+      });
+
+      var response = tokenRes.body;
+
+      if(response == true)
+        {
+          http.Response userRes = await http.get(
+            Uri.parse('$uri/'),
+            headers: <String, String>{
+              'Content-Type': 'application/json ; charset=UTF-8',
+              "x-auth-token" :token
+            }
+          );
+
+          var userProvider = Provider.of<UserProvider>(context, listen: false);
+          userProvider.setUser(userRes.body);
+        }
     } catch (e) {
       showSnackBar(context, e.toString());
     }

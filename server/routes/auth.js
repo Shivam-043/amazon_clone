@@ -2,7 +2,7 @@ const express = require('express');
 const User = require('../models/user');
 var bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
+const auth = require('../middleware/auth');
 const authRouter = express.Router();
 
 //SIGN UP ROUTE
@@ -60,6 +60,28 @@ authRouter.post("/api/signin", async (req, res) =>{
         res.status(500).json({error : error.message});
     }
     
+})
+
+authRouter.get('/tokenIsValid' , async(req, res) =>{
+
+    try {
+        const token = req.header('x-auth-token');
+        if(!token) return res.json(false);
+        const verified = jwt.verify(token, "passwordKey");
+        if(!verified) return res.json(false);
+
+        const user = await User.findById(verified.id);
+        if(!user) return res.json(false);
+
+        return res.json(true);
+    } catch (error) {
+        res.status(500).json({error : error.message});
+    }
+})
+
+authRouter.get('/' , auth , async (req, res) =>{
+    const user= await User.findById(req.user);
+    res.json({...user._doc, token: req.token});
 })
 
 
